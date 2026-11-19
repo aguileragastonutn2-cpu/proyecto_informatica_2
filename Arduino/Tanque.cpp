@@ -1,4 +1,3 @@
-
 #include "Tanque.h"
 
 const int VALVULA_ABIERTA = 90;
@@ -11,6 +10,7 @@ Tanque::Tanque(int trig, int echo, int servo) {
   nivel = 0;
   lleno = false;
   lecturaValida = false;
+  detenidoManual = false;
 }
 
 void Tanque::iniciar() {
@@ -53,6 +53,11 @@ void Tanque::actualizarEstado(float umbral) {
     return;
   }
 
+  if (detenidoManual) {
+    valvula.write(VALVULA_CERRADA);
+    return;
+  }
+
   if (nivel >= umbral) {
     lleno = true;
     valvula.write(VALVULA_CERRADA);
@@ -76,4 +81,14 @@ bool Tanque::estaLleno() {
 
 bool Tanque::lecturaCorrecta() {
   return lecturaValida;
+}
+void Tanque::detenerManual() {
+  detenidoManual = true;
+  valvula.write(VALVULA_CERRADA);
+}
+
+void Tanque::reanudar() {
+  detenidoManual = false;
+  lleno = false;
+  valvula.write(VALVULA_ABIERTA);
 }
