@@ -1,4 +1,3 @@
-
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 #include "Tanque.h"
@@ -17,6 +16,15 @@ Tanque* tanques[4] = {
 const float DISTANCIA_VACIO = 20.0;
 const float DISTANCIA_LLENO = 2.0;
 const float UMBRAL = 90.0;
+
+enum EstadoSistema {
+  LLENANDO,
+  LLENADO_PARCIAL,
+  COMPLETO,
+  FALLA_SENSOR
+};
+
+EstadoSistema estadoActual;
 
 void setup() {
   Serial.begin(9600);
@@ -41,7 +49,7 @@ void loop() {
   }
 
   int llenos = 0;
-
+bool fallaSensor = false;
   for (int i = 0; i < 4; i++) {
     tanques[i]->medirNivel(
       DISTANCIA_VACIO, DISTANCIA_LLENO
@@ -49,12 +57,58 @@ void loop() {
 
     tanques[i]->actualizarEstado(UMBRAL);
 
-    if (tanques[i]->estaLleno()) {
-      llenos++;
-    }
+ if (tanques[i]->estaLleno()) {
+  llenos++;
+}
+
+if (!tanques[i]->lecturaCorrecta()) {
+  fallaSensor = true;
+}
   }
 
-  digitalWrite(A0, llenos < 4 ? HIGH : LOW);
+  digitalWrite(A0, (!fallaSensor && llenos < 4) ? HIGH : LOW);
+
+  if (fallaSensor) {
+  estadoActual = FALLA_SENSOR;
+} else if (llenos == 4) {
+  estadoActual = COMPLETO;
+} else if (llenos > 0) {
+  estadoActual = LLENADO_PARCIAL;
+} else {
+  estadoActual = LLENANDO;
+}
+
+Serial.print("Estado del sistema: ");
+
+switch (estadoActual) {
+  case LLENANDO:
+    Serial.println("LLENANDO");
+    break;
+
+  case LLENADO_PARCIAL:
+    Serial.println("LLENADO PARCIAL");
+    break;
+
+  case COMPLETO:
+    Serial.println("COMPLETO");
+    break;
+
+  case FALLA_SENSOR:
+    Serial.println("FALLA SENSOR");
+    break;
+}
+
+Serial.print("NIVELES,");
+
+for (int i = 0; i < 4; i++) {
+  Serial.print(tanques[i]->obtenerNivel());
+
+  if (i < 3) {
+    Serial.print(",");
+  }
+}
+
+Serial.println();
 
   for (int i = 0; i < 4; i += 2) {
     lcd.clear();
