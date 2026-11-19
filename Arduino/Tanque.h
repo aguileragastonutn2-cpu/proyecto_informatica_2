@@ -1,4 +1,3 @@
-
 #ifndef TANQUE_H
 #define TANQUE_H
 
@@ -10,7 +9,7 @@ class Tanque {
     int pinTrig;
     int pinEcho;
     int pinServo;
-
+bool detenidoManual;
     Servo valvula;
     float nivel;
     bool lleno;
@@ -23,6 +22,8 @@ class Tanque {
     float medirNivel(float distanciaVacio, float distanciaLleno);
     void actualizarEstado(float umbral);
     void reiniciar();
+    void detenerManual();
+void reanudar();
 
     float obtenerNivel();
     bool estaLleno();
